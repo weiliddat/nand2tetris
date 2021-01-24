@@ -14,5 +14,11 @@ CHIP Mux {
     OUT out;
 
     PARTS:
-    // Put your code here:
+    // first select
+    And(a = sel, b = b, out = outb);
+    // second select
+    Not(in = sel, out = sela);
+    And(a = sela, b = a, out = outa);
+    // final product
+    Or(a = outa, b = outb, out = out);
 }
