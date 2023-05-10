@@ -13,4 +13,13 @@ CHIP Nand {
     OUT out;
 
     BUILTIN Nand;
+
+    // could also be done with 2 relays, with an additional implicit `v` for input voltage that's always on
+    // these relays have inputs `c` representing coil, and `in` representing input
+    // SPST-NO stands for single pole single throw normally open
+    // SPST-NC stands for single pole single throw normally closed
+
+    // PARTS:
+    // SPST-NO(c=a, in=b, out=outab);
+    // SPST-NC(c=outab, in=v, out=out);
 }
