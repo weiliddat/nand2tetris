@@ -39,5 +39,45 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    // Use A from ALU?
+    // C instruction 6th bit
+    And(a=instruction[15], b=instruction[5], out=loadALUA);
+    Mux16(a=instruction, b=ALUOUT, sel=loadALUA, out=A);
+
+    // A Register
+    // if instruction[15] == 0 or C instruction[5]
+    Not(in=instruction[15], out=isA);
+    Or(a=isA, b=instruction[5], out=writeA);
+    ARegister(in=A, load=writeA, out=AOUT, out[0..14]=addressM);
+
+    // PC
+    PC(in=AOUT, reset=reset, load=false, inc=true, out[0..14]=pc);
+
+    // Write to M?
+    // C instruction 4th bit
+    And(a=instruction[15], b=instruction[3], out=writeM);
+
+    // Write to D?
+    // C instruction 5th bit
+    And(a=instruction[15], b=instruction[4], out=writeD);
+    DRegister(in=ALUOUT, load=writeD, out=DOUT);
+
+    // select A or M
+    // C instruction 13th bit
+    And(a=instruction[15], b=instruction[12], out=loadM);
+    Mux16(a=AOUT, b=inM, sel=loadM, out=AMOUT);
+
+    // ALU
+    ALU(
+        x=DOUT,
+        y=AMOUT,
+        zx=instruction[11],
+        nx=instruction[10],
+        zy=instruction[9],
+        ny=instruction[8],
+        f=instruction[7],
+        no=instruction[6],
+        out=ALUOUT,
+        out=outM
+    );
 }
