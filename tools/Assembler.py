@@ -1,3 +1,4 @@
+from curses.ascii import isdigit
 import os
 import re
 import sys
@@ -95,7 +96,7 @@ def symb(line: str) -> str:
     return symbol and symbol.group(1)
 
 
-def bin_symb(line: str) -> str:
+def bin_symb(line: str | int) -> str:
     i = int(line)
     b = f"{i:0>15b}"
     return b
@@ -138,19 +139,60 @@ def main():
     asmpath = sys.argv[1]
     hackpath = get_hack_filepath(asmpath)
     lines = read_file_lines(asmpath)
+
+    symbols = {
+        "R0": 0,
+        "R1": 1,
+        "R2": 2,
+        "R3": 3,
+        "R4": 4,
+        "R5": 5,
+        "R6": 6,
+        "R7": 7,
+        "R8": 8,
+        "R9": 9,
+        "R10": 10,
+        "R11": 11,
+        "R12": 12,
+        "R13": 13,
+        "R14": 14,
+        "R15": 15,
+        "SP": 0,
+        "LCL": 1,
+        "ARG": 2,
+        "THIS": 3,
+        "THAT": 4,
+        "SCREEN": 16384,
+        "KBD": 24576,
+    }
+    variable_ptr = 16
+
+    ln = 0
+    for l in lines:
+        type = instruction_type(l)
+        if type == "L":
+            symbols[symb(l)] = ln
+        else:
+            ln += 1
+
     with open(hackpath, "w") as w:
-        for n, l in enumerate(lines):
-            ln = n + 1
+        for l in lines:
             type = instruction_type(l)
-            debug(l, ln, type)
+
             if type == "A":
-                w.write(f"0{bin_symb(symb(l))}\n")
+                if symb(l) not in symbols:
+                    if symb(l).isdigit():
+                        symbols[symb(l)] = int(symb(l))
+                    else:
+                        symbols[symb(l)] = variable_ptr
+                        variable_ptr += 1
+                w.write(f"0{bin_symb(symbols[symb(l)])}\n")
+
             if type == "C":
                 parts = parse_c_instruction(l)
                 w.write(
                     f"111{bin_comp(parts['comp'])}{bin_dest(parts['dest'])}{bin_jump(parts['jump'])}\n"
                 )
-            pass
 
 
 def get_hack_filepath(filepath):
@@ -159,22 +201,6 @@ def get_hack_filepath(filepath):
     filename_no_ext = os.path.splitext(filename)[0]
     outpath = os.path.join(dirpath, f"{filename_no_ext}.hack")
     return outpath
-
-
-def debug(l, ln, type):
-    if os.environ.get("VERBOSE"):
-        print(f"{ln} {l} {type}")
-        if type == "A" or type == "L":
-            print(f"symb {symb(l)}")
-            print(f"0{bin_symb(symb(l))}")
-        else:
-            parts = parse_c_instruction(l)
-            print(f"dest {parts['dest']}")
-            print(f"comp {parts['comp']}")
-            print(f"jump {parts['jump']}")
-            print(
-                f"111{bin_comp(parts['comp'])}{bin_dest(parts['dest'])}{bin_jump(parts['jump'])}"
-            )
 
 
 if __name__ == "__main__":
