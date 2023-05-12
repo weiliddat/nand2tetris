@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-from typing import Literal
+from typing import Literal, TypedDict
 
 
 def read_file_lines(filepath: str) -> list[str]:
@@ -51,11 +51,19 @@ dest_codes = {
     None:  "000",
     "M":   "001",
     "D":   "010",
-    "DM":  "011",
     "A":   "100",
+    "DM":  "011",
+    "MD":  "011",
     "AM":  "101",
+    "MA":  "101",
     "AD":  "110",
+    "DA":  "110",
     "ADM": "111",
+    "AMD": "111",
+    "MDA": "111",
+    "MAD": "111",
+    "DAM": "111",
+    "DMA": "111",
 }
 jump_codes = {
     None:  "000",
@@ -105,18 +113,52 @@ def bin_jump(line: str | None) -> str:
     return jump_codes[line]
 
 
+class CInstructionParts(TypedDict):
+    dest: str | None
+    comp: str
+    jump: str | None
+
+
+def parse_c_instruction(line: str) -> CInstructionParts:
+    matcher = re.compile(
+        "^(?P<dest>[0ADM]+(?==))?=?(?P<comp>[!\\-+|&ADM01]+);?(?P<jump>(?<=;)[JMPGTEQLN]+)?$"
+    )
+    matches = matcher.match(line)
+    if matches is None:
+        raise ValueError(f"No dest/comp/jump found for {line}")
+    else:
+        return {
+            "dest": matches.group("dest"),
+            "comp": matches.group("comp"),
+            "jump": matches.group("jump"),
+        }
+
+
 def main():
-    filepath = sys.argv[1]
-    lines = read_file_lines(filepath)
-    for n, l in enumerate(lines):
-        ln = n + 1
-        type = instruction_type(l)
-        debug(l, ln, type)
-        # if type == "A":
-        #     print(f"0{bin_symb(symb(l))}")
-        # if type == "C":
-        #     print(f"111{bin_comp(comp(l))}{bin_dest(dest(l))}{bin_jump(jump(l))}")
-        pass
+    asmpath = sys.argv[1]
+    hackpath = get_hack_filepath(asmpath)
+    lines = read_file_lines(asmpath)
+    with open(hackpath, "w") as w:
+        for n, l in enumerate(lines):
+            ln = n + 1
+            type = instruction_type(l)
+            debug(l, ln, type)
+            if type == "A":
+                w.write(f"0{bin_symb(symb(l))}\n")
+            if type == "C":
+                parts = parse_c_instruction(l)
+                w.write(
+                    f"111{bin_comp(parts['comp'])}{bin_dest(parts['dest'])}{bin_jump(parts['jump'])}\n"
+                )
+            pass
+
+
+def get_hack_filepath(filepath):
+    dirpath = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+    filename_no_ext = os.path.splitext(filename)[0]
+    outpath = os.path.join(dirpath, f"{filename_no_ext}.hack")
+    return outpath
 
 
 def debug(l, ln, type):
@@ -124,16 +166,15 @@ def debug(l, ln, type):
         print(f"{ln} {l} {type}")
         if type == "A" or type == "L":
             print(f"symb {symb(l)}")
+            print(f"0{bin_symb(symb(l))}")
         else:
-            dest_match = dest(l)
-            if dest_match:
-                print(f"dest {dest_match} {bin_dest(dest_match)}")
-            comp_match = comp(l)
-            if comp_match:
-                print(f"comp {comp_match} {bin_comp(comp_match)}")
-            jump_match = jump(l)
-            if jump_match:
-                print(f"jump {jump_match} {bin_jump(jump_match)}")
+            parts = parse_c_instruction(l)
+            print(f"dest {parts['dest']}")
+            print(f"comp {parts['comp']}")
+            print(f"jump {parts['jump']}")
+            print(
+                f"111{bin_comp(parts['comp'])}{bin_dest(parts['dest'])}{bin_jump(parts['jump'])}"
+            )
 
 
 if __name__ == "__main__":
