@@ -320,8 +320,7 @@ def write_push_pop(
             A=M
             M=D"""
         )
-    return ""
-
+    raise ValueError(f"unknown command {command} {segment} {index}")
 
 def write_end_loop():
     return dedent(
