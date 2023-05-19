@@ -187,23 +187,136 @@ def write_arithmetic(command: str):
         )
 
 
+location_names = {
+    "local": "LCL",
+    "argument": "ARG",
+    "this": "THIS",
+    "that": "THAT",
+}
+
+
 def write_push_pop(
     command: Literal[CommandType.C_PUSH, CommandType.C_POP],
     segment: str,
     index: int,
 ):
+    address = ""
+
     if command == CommandType.C_PUSH:
-        if segment == "constant":
-            return dedent(
-                f"""\
-                @{index}
-                D=A
-                @SP
-                A=M
-                M=D
-                @SP
-                M=M+1"""
-            )
+        match (segment, index):
+            case ("constant", index):
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    """
+                )
+            case ("local", index) | ("argument", index) | ("this", index) | (
+                "that",
+                index,
+            ):
+                location = location_names[segment]
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @{location}
+                    A=M+D
+                    D=M
+                    """
+                )
+            case ("pointer", 0):
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @THIS
+                    A=M+D
+                    D=M
+                    """
+                )
+            case ("pointer", 1):
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @THAT
+                    A=M+D
+                    D=M
+                    """
+                )
+            case ("temp", index):
+                location = 5 + index
+                address = dedent(
+                    f"""\
+                    @{location}
+                    D=M
+                    """
+                )
+
+        return address + dedent(
+            f"""\
+            @SP
+            A=M
+            M=D
+            @SP
+            M=M+1"""
+        )
+    elif command == CommandType.C_POP:
+        match (segment, index):
+            case ("local", index) | ("argument", index) | ("this", index) | (
+                "that",
+                index,
+            ):
+                location = location_names[segment]
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @{location}
+                    D=M+D
+                    """
+                )
+            case ("pointer", 0):
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @THIS
+                    D=M+D
+                    """
+                )
+            case ("pointer", 1):
+                address = dedent(
+                    f"""\
+                    @{index}
+                    D=A
+                    @THAT
+                    D=M+D
+                    """
+                )
+            case ("temp", index):
+                location = 5 + index
+                address = dedent(
+                    f"""\
+                    @{location}
+                    D=A
+                    """
+                )
+
+        return address + dedent(
+            f"""\
+            @R13
+            M=D
+            @SP
+            M=M-1
+            A=M
+            D=M
+            @R13
+            A=M
+            M=D"""
+        )
+    return ""
 
 
 def write_end_loop():
