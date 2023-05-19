@@ -247,6 +247,13 @@ def write_push_pop(
                     D=M
                     """
                 )
+            case ("static", index):
+                address = dedent(
+                    f"""\
+                    @S{index}
+                    D=M
+                    """
+                )
 
         return address + dedent(
             f"""\
@@ -290,6 +297,13 @@ def write_push_pop(
                 address = dedent(
                     f"""\
                     @{location}
+                    D=A
+                    """
+                )
+            case ("static", index):
+                address = dedent(
+                    f"""\
+                    @S{index}
                     D=A
                     """
                 )
