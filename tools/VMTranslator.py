@@ -1,8 +1,10 @@
-from enum import Enum
 import re
 import sys
+from enum import Enum
 from textwrap import dedent
 from typing import Literal
+
+from utils import get_filepath_with_ext
 
 
 def read_file_lines(filepath: str) -> list[str]:
@@ -185,6 +187,7 @@ def write_arithmetic(command: str):
             A=M-1
             M=!M"""
         )
+    raise ValueError(f"Unknown arithmetic command {command}")
 
 
 location_names = {
@@ -322,6 +325,7 @@ def write_push_pop(
         )
     raise ValueError(f"unknown command {command} {segment} {index}")
 
+
 def write_end_loop():
     return dedent(
         """\
@@ -348,15 +352,21 @@ def write_end_loop():
 
 
 def main():
-    lines = read_file_lines(sys.argv[1])
-    for line in lines:
-        type = get_command_type(line)
-        print(f"// {line}")
-        if type == CommandType.C_ARITHMETIC:
-            print(write_arithmetic(line))
-        elif type == CommandType.C_PUSH or type == CommandType.C_POP:
-            print(write_push_pop(type, get_arg1(line), get_arg2(line)))
-    print(write_end_loop())
+    asmpath = sys.argv[1]
+    hackpath = get_filepath_with_ext(asmpath, "asm")
+    lines = read_file_lines(asmpath)
+
+    with open(hackpath, "w") as w:
+        for line in lines:
+            type = get_command_type(line)
+            w.write(f"// {line}\n")
+            if type == CommandType.C_ARITHMETIC:
+                w.write(write_arithmetic(line))
+            elif type == CommandType.C_PUSH or type == CommandType.C_POP:
+                w.write(write_push_pop(type, get_arg1(line), get_arg2(line)))
+            w.write("\n")
+        w.write(write_end_loop())
+        w.write("\n")
 
 
 if __name__ == "__main__":

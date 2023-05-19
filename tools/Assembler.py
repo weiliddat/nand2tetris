@@ -1,7 +1,8 @@
-import os
 import re
 import sys
 from typing import Literal, TypedDict
+
+from utils import get_filepath_with_ext
 
 
 def read_file_lines(filepath: str) -> list[str]:
@@ -136,7 +137,7 @@ def parse_c_instruction(line: str) -> CInstructionParts:
 
 def main():
     asmpath = sys.argv[1]
-    hackpath = get_hack_filepath(asmpath)
+    hackpath = get_filepath_with_ext(asmpath, "hack")
     lines = read_file_lines(asmpath)
 
     symbols = {
@@ -192,14 +193,6 @@ def main():
                 w.write(
                     f"111{bin_comp(parts['comp'])}{bin_dest(parts['dest'])}{bin_jump(parts['jump'])}\n"
                 )
-
-
-def get_hack_filepath(filepath):
-    dirpath = os.path.dirname(filepath)
-    filename = os.path.basename(filepath)
-    filename_no_ext = os.path.splitext(filename)[0]
-    outpath = os.path.join(dirpath, f"{filename_no_ext}.hack")
-    return outpath
 
 
 if __name__ == "__main__":
