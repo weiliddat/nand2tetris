@@ -1,6 +1,7 @@
 from enum import Enum
 import re
 import sys
+from textwrap import dedent
 from typing import Literal
 
 
@@ -56,13 +57,15 @@ def get_arg2(line: str) -> int:
 
 def write_arithmetic(command: str):
     if command == "add":
-        return """@SP
-M=M-1
-A=M
-D=M
-A=A-1
-M=D+M
-"""
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            A=A-1
+            M=D+M"""
+        )
 
 
 def write_push_pop(
@@ -72,13 +75,16 @@ def write_push_pop(
 ):
     if command == CommandType.C_PUSH:
         if segment == "constant":
-            return f"""@{index}
-D=A
-@SP
-A=M
-M=D
-@SP
-M=M+1"""
+            return dedent(
+                f"""\
+                @{index}
+                D=A
+                @SP
+                A=M
+                M=D
+                @SP
+                M=M+1"""
+            )
 
 
 def main():
