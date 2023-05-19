@@ -55,7 +55,13 @@ def get_arg2(line: str) -> int:
     return int(line.split(" ")[2])
 
 
+jmpindex = 0
+
+
 def write_arithmetic(command: str):
+    global jmpindex
+    jmpindex += 1
+
     if command == "add":
         return dedent(
             """\
@@ -64,7 +70,137 @@ def write_arithmetic(command: str):
             A=M
             D=M
             A=A-1
-            M=D+M"""
+            M=M+D"""
+        )
+    elif command == "sub":
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            A=A-1
+            M=M-D"""
+        )
+    elif command == "neg":
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            M=-D
+            @SP
+            M=M+1"""
+        )
+    elif command == "eq":
+        return dedent(
+            f"""\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            @SP
+            M=M-1
+            A=M
+            D=M-D
+            @EQTRUE{jmpindex}
+            D;JEQ
+            @SP
+            A=M
+            M=0
+            @EQEND{jmpindex}
+            0;JMP
+            (EQTRUE{jmpindex})
+            @SP
+            A=M
+            M=-1
+            (EQEND{jmpindex})
+            @SP
+            M=M+1"""
+        )
+    elif command == "lt":
+        return dedent(
+            f"""\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            @SP
+            M=M-1
+            A=M
+            D=M-D
+            @LTTRUE{jmpindex}
+            D;JLT
+            @SP
+            A=M
+            M=0
+            @LTEND{jmpindex}
+            0;JMP
+            (LTTRUE{jmpindex})
+            @SP
+            A=M
+            M=-1
+            (LTEND{jmpindex})
+            @SP
+            M=M+1"""
+        )
+    elif command == "gt":
+        return dedent(
+            f"""\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            @SP
+            M=M-1
+            A=M
+            D=M-D
+            @GTTRUE{jmpindex}
+            D;JGT
+            @SP
+            A=M
+            M=0
+            @GTEND{jmpindex}
+            0;JMP
+            (GTTRUE{jmpindex})
+            @SP
+            A=M
+            M=-1
+            (GTEND{jmpindex})
+            @SP
+            M=M+1"""
+        )
+    elif command == "and":
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            A=A-1
+            M=M&D"""
+        )
+    elif command == "or":
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            A=A-1
+            M=M|D"""
+        )
+    elif command == "not":
+        return dedent(
+            """\
+            @SP
+            M=M-1
+            A=M
+            D=M
+            M=!D
+            @SP
+            M=M+1"""
         )
 
 
@@ -87,6 +223,15 @@ def write_push_pop(
             )
 
 
+def write_end_loop():
+    return dedent(
+        """\
+        (END_LOOP)
+        @END_LOOP
+        0;JMP"""
+    )
+
+
 def main():
     lines = read_file_lines(sys.argv[1])
     for line in lines:
@@ -96,6 +241,7 @@ def main():
             print(write_arithmetic(line))
         elif type == CommandType.C_PUSH or type == CommandType.C_POP:
             print(write_push_pop(type, get_arg1(line), get_arg2(line)))
+    print(write_end_loop())
 
 
 if __name__ == "__main__":
