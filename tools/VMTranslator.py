@@ -228,20 +228,14 @@ def write_push_pop(
             case ("pointer", 0):
                 address = dedent(
                     f"""\
-                    @{index}
-                    D=A
                     @THIS
-                    A=M+D
                     D=M
                     """
                 )
             case ("pointer", 1):
                 address = dedent(
                     f"""\
-                    @{index}
-                    D=A
                     @THAT
-                    A=M+D
                     D=M
                     """
                 )
@@ -280,19 +274,15 @@ def write_push_pop(
             case ("pointer", 0):
                 address = dedent(
                     f"""\
-                    @{index}
-                    D=A
                     @THIS
-                    D=M+D
+                    D=A
                     """
                 )
             case ("pointer", 1):
                 address = dedent(
                     f"""\
-                    @{index}
-                    D=A
                     @THAT
-                    D=M+D
+                    D=A
                     """
                 )
             case ("temp", index):
