@@ -15,6 +15,10 @@ M=D
 @SP
 M=M+1
 // eq
+@RET1
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -23,18 +27,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@EQTRUE1
+@TRUE
 D;JEQ
-@SP
-A=M
-M=0
-@EQEND1
+@FALSE
 0;JMP
-(EQTRUE1)
-@SP
-A=M
-M=-1
-(EQEND1)
+(RET1)
 @SP
 M=M+1
 // push constant 17
@@ -54,6 +51,10 @@ M=D
 @SP
 M=M+1
 // eq
+@RET2
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -62,18 +63,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@EQTRUE2
+@TRUE
 D;JEQ
-@SP
-A=M
-M=0
-@EQEND2
+@FALSE
 0;JMP
-(EQTRUE2)
-@SP
-A=M
-M=-1
-(EQEND2)
+(RET2)
 @SP
 M=M+1
 // push constant 16
@@ -93,6 +87,10 @@ M=D
 @SP
 M=M+1
 // eq
+@RET3
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -101,18 +99,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@EQTRUE3
+@TRUE
 D;JEQ
-@SP
-A=M
-M=0
-@EQEND3
+@FALSE
 0;JMP
-(EQTRUE3)
-@SP
-A=M
-M=-1
-(EQEND3)
+(RET3)
 @SP
 M=M+1
 // push constant 892
@@ -132,6 +123,10 @@ M=D
 @SP
 M=M+1
 // lt
+@RET4
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -140,18 +135,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@LTTRUE4
+@TRUE
 D;JLT
-@SP
-A=M
-M=0
-@LTEND4
+@FALSE
 0;JMP
-(LTTRUE4)
-@SP
-A=M
-M=-1
-(LTEND4)
+(RET4)
 @SP
 M=M+1
 // push constant 891
@@ -171,6 +159,10 @@ M=D
 @SP
 M=M+1
 // lt
+@RET5
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -179,18 +171,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@LTTRUE5
+@TRUE
 D;JLT
-@SP
-A=M
-M=0
-@LTEND5
+@FALSE
 0;JMP
-(LTTRUE5)
-@SP
-A=M
-M=-1
-(LTEND5)
+(RET5)
 @SP
 M=M+1
 // push constant 891
@@ -210,6 +195,10 @@ M=D
 @SP
 M=M+1
 // lt
+@RET6
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -218,18 +207,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@LTTRUE6
+@TRUE
 D;JLT
-@SP
-A=M
-M=0
-@LTEND6
+@FALSE
 0;JMP
-(LTTRUE6)
-@SP
-A=M
-M=-1
-(LTEND6)
+(RET6)
 @SP
 M=M+1
 // push constant 32767
@@ -249,6 +231,10 @@ M=D
 @SP
 M=M+1
 // gt
+@RET7
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -257,18 +243,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@GTTRUE7
+@TRUE
 D;JGT
-@SP
-A=M
-M=0
-@GTEND7
+@FALSE
 0;JMP
-(GTTRUE7)
-@SP
-A=M
-M=-1
-(GTEND7)
+(RET7)
 @SP
 M=M+1
 // push constant 32766
@@ -288,6 +267,10 @@ M=D
 @SP
 M=M+1
 // gt
+@RET8
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -296,18 +279,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@GTTRUE8
+@TRUE
 D;JGT
-@SP
-A=M
-M=0
-@GTEND8
+@FALSE
 0;JMP
-(GTTRUE8)
-@SP
-A=M
-M=-1
-(GTEND8)
+(RET8)
 @SP
 M=M+1
 // push constant 32766
@@ -327,6 +303,10 @@ M=D
 @SP
 M=M+1
 // gt
+@RET9
+D=A
+@RET
+M=D
 @SP
 M=M-1
 A=M
@@ -335,18 +315,11 @@ D=M
 M=M-1
 A=M
 D=M-D
-@GTTRUE9
+@TRUE
 D;JGT
-@SP
-A=M
-M=0
-@GTEND9
+@FALSE
 0;JMP
-(GTTRUE9)
-@SP
-A=M
-M=-1
-(GTEND9)
+(RET9)
 @SP
 M=M+1
 // push constant 57
@@ -397,12 +370,8 @@ A=A-1
 M=M-D
 // neg
 @SP
-M=M-1
-A=M
-D=M
-M=-D
-@SP
-M=M+1
+A=M-1
+M=-M
 // and
 @SP
 M=M-1
@@ -427,12 +396,24 @@ A=A-1
 M=M|D
 // not
 @SP
-M=M-1
-A=M
-D=M
-M=!D
+A=M-1
+M=!M
+@END_LOOP
+0;JMP
+(TRUE)
 @SP
-M=M+1
+A=M
+M=-1
+@RET
+A=M
+0;JMP
+(FALSE)
+@SP
+A=M
+M=0
+@RET
+A=M
+0;JMP
 (END_LOOP)
 @END_LOOP
 0;JMP

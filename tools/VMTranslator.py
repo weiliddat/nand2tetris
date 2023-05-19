@@ -86,16 +86,16 @@ def write_arithmetic(command: str):
         return dedent(
             """\
             @SP
-            M=M-1
-            A=M
-            D=M
-            M=-D
-            @SP
-            M=M+1"""
+            A=M-1
+            M=-M"""
         )
     elif command == "eq":
         return dedent(
             f"""\
+            @RET{jmpindex}
+            D=A
+            @RET
+            M=D
             @SP
             M=M-1
             A=M
@@ -104,24 +104,21 @@ def write_arithmetic(command: str):
             M=M-1
             A=M
             D=M-D
-            @EQTRUE{jmpindex}
+            @TRUE
             D;JEQ
-            @SP
-            A=M
-            M=0
-            @EQEND{jmpindex}
+            @FALSE
             0;JMP
-            (EQTRUE{jmpindex})
-            @SP
-            A=M
-            M=-1
-            (EQEND{jmpindex})
+            (RET{jmpindex})
             @SP
             M=M+1"""
         )
     elif command == "lt":
         return dedent(
             f"""\
+            @RET{jmpindex}
+            D=A
+            @RET
+            M=D
             @SP
             M=M-1
             A=M
@@ -130,24 +127,21 @@ def write_arithmetic(command: str):
             M=M-1
             A=M
             D=M-D
-            @LTTRUE{jmpindex}
+            @TRUE
             D;JLT
-            @SP
-            A=M
-            M=0
-            @LTEND{jmpindex}
+            @FALSE
             0;JMP
-            (LTTRUE{jmpindex})
-            @SP
-            A=M
-            M=-1
-            (LTEND{jmpindex})
+            (RET{jmpindex})
             @SP
             M=M+1"""
         )
     elif command == "gt":
         return dedent(
             f"""\
+            @RET{jmpindex}
+            D=A
+            @RET
+            M=D
             @SP
             M=M-1
             A=M
@@ -156,18 +150,11 @@ def write_arithmetic(command: str):
             M=M-1
             A=M
             D=M-D
-            @GTTRUE{jmpindex}
+            @TRUE
             D;JGT
-            @SP
-            A=M
-            M=0
-            @GTEND{jmpindex}
+            @FALSE
             0;JMP
-            (GTTRUE{jmpindex})
-            @SP
-            A=M
-            M=-1
-            (GTEND{jmpindex})
+            (RET{jmpindex})
             @SP
             M=M+1"""
         )
@@ -195,12 +182,8 @@ def write_arithmetic(command: str):
         return dedent(
             """\
             @SP
-            M=M-1
-            A=M
-            D=M
-            M=!D
-            @SP
-            M=M+1"""
+            A=M-1
+            M=!M"""
         )
 
 
@@ -226,6 +209,22 @@ def write_push_pop(
 def write_end_loop():
     return dedent(
         """\
+        @END_LOOP
+        0;JMP
+        (TRUE)
+        @SP
+        A=M
+        M=-1
+        @RET
+        A=M
+        0;JMP
+        (FALSE)
+        @SP
+        A=M
+        M=0
+        @RET
+        A=M
+        0;JMP
         (END_LOOP)
         @END_LOOP
         0;JMP"""
