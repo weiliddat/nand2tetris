@@ -326,6 +326,30 @@ def write_push_pop(
     raise ValueError(f"unknown command {command} {segment} {index}")
 
 
+def write_label(label: str):
+    return f"({label})"
+
+
+def write_goto(label: str):
+    return dedent(
+        f"""\
+        @{label}
+        0;JMP"""
+    )
+
+
+def write_if_goto(label: str):
+    return dedent(
+        f"""\
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @{label}
+        D;JNE"""
+    )
+
+
 def write_end_loop():
     return dedent(
         """\
@@ -364,6 +388,12 @@ def main():
                 w.write(write_arithmetic(line))
             elif type == CommandType.C_PUSH or type == CommandType.C_POP:
                 w.write(write_push_pop(type, get_arg1(line), get_arg2(line)))
+            elif type == CommandType.C_LABEL:
+                w.write(write_label(get_arg1(line)))
+            elif type == CommandType.C_GOTO:
+                w.write(write_goto(get_arg1(line)))
+            elif type == CommandType.C_IF:
+                w.write(write_if_goto(get_arg1(line)))
             w.write("\n")
         w.write(write_end_loop())
         w.write("\n")
