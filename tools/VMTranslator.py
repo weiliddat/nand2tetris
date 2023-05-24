@@ -72,7 +72,8 @@ def write_arithmetic(command: str):
             A=M
             D=M
             A=A-1
-            M=M+D"""
+            M=M+D
+            """
         )
     elif command == "sub":
         return dedent(
@@ -82,14 +83,16 @@ def write_arithmetic(command: str):
             A=M
             D=M
             A=A-1
-            M=M-D"""
+            M=M-D
+            """
         )
     elif command == "neg":
         return dedent(
             """\
             @SP
             A=M-1
-            M=-M"""
+            M=-M
+            """
         )
     elif command == "eq":
         return dedent(
@@ -112,7 +115,8 @@ def write_arithmetic(command: str):
             0;JMP
             (RET{jmpindex})
             @SP
-            M=M+1"""
+            M=M+1
+            """
         )
     elif command == "lt":
         return dedent(
@@ -135,7 +139,8 @@ def write_arithmetic(command: str):
             0;JMP
             (RET{jmpindex})
             @SP
-            M=M+1"""
+            M=M+1
+            """
         )
     elif command == "gt":
         return dedent(
@@ -158,7 +163,8 @@ def write_arithmetic(command: str):
             0;JMP
             (RET{jmpindex})
             @SP
-            M=M+1"""
+            M=M+1
+            """
         )
     elif command == "and":
         return dedent(
@@ -168,7 +174,8 @@ def write_arithmetic(command: str):
             A=M
             D=M
             A=A-1
-            M=M&D"""
+            M=M&D
+            """
         )
     elif command == "or":
         return dedent(
@@ -178,14 +185,16 @@ def write_arithmetic(command: str):
             A=M
             D=M
             A=A-1
-            M=M|D"""
+            M=M|D
+            """
         )
     elif command == "not":
         return dedent(
             """\
             @SP
             A=M-1
-            M=!M"""
+            M=!M
+            """
         )
     raise ValueError(f"Unknown arithmetic command {command}")
 
@@ -264,7 +273,8 @@ def write_push_pop(
             A=M
             M=D
             @SP
-            M=M+1"""
+            M=M+1
+            """
         )
     elif command == CommandType.C_POP:
         match (segment, index):
@@ -321,7 +331,8 @@ def write_push_pop(
             D=M
             @R13
             A=M
-            M=D"""
+            M=D
+            """
         )
     raise ValueError(f"unknown command {command} {segment} {index}")
 
@@ -334,7 +345,8 @@ def write_goto(label: str):
     return dedent(
         f"""\
         @{label}
-        0;JMP"""
+        0;JMP
+        """
     )
 
 
@@ -346,71 +358,65 @@ def write_if_goto(label: str):
         A=M
         D=M
         @{label}
-        D;JNE"""
+        D;JNE
+        """
     )
 
 
-def write_function(name: str, number_args: int):
+def write_function(name: str, number_vars: int):
     code = f"@{name}\n"
-    for _ in range(number_args):
-        code += write_push_pop(CommandType.C_PUSH, "constant", 0) + "\n"
+    for _ in range(number_vars):
+        code += write_push_pop(CommandType.C_PUSH, "constant", 0)
     return code
 
 
 def write_return():
     return dedent(
         """\
-        @LCL
+        @LCL // frame = LCL
         D=M
         @R13
         M=D
-
-        @5
+        @5 // retAddr = *(frame-5)
         A=D-A
         D=M
         @R14
         M=D
-
-        @SP
+        @SP // *ARG = pop()
         M=M-1
         A=M
         D=M
         @ARG
         A=M
         M=D
-
-        @ARG
+        @ARG // SP = ARG+1
         D=M+1
         @SP
         M=D
-
-        @R13
+        @R13 // THAT = *(frame-1)
         AM=M-1
         D=M
         @THAT
         M=D
-
-        @R13
+        @R13 // THIS = *(frame-2)
         AM=M-1
         D=M
         @THIS
         M=D
-
-        @R13
+        @R13 // ARG = *(frame-3)
         AM=M-1
         D=M
         @ARG
         M=D
-
-        @R13
+        @R13 // LCL = *(frame-4)
         AM=M-1
         D=M
         @LCL
         M=D
-        
-        @R14
+        @R14 // goto retAddr
         A=M
-        0;JMP"""
+        0;JMP
+        """
     )
 
 
@@ -435,7 +441,8 @@ def write_end_loop():
         0;JMP
         (END_LOOP)
         @END_LOOP
-        0;JMP"""
+        0;JMP
+        """
     )
 
 
@@ -463,16 +470,14 @@ def main():
                 w.write(write_if_goto(function_prefix + get_arg1(line)))
             elif type == CommandType.C_FUNCTION:
                 function_name = get_arg1(line)
-                number_args = get_arg2(line)
+                number_vars = get_arg2(line)
                 function_prefix += f"{function_name}$"
-                w.write(write_function(f"{filename}.{function_name}", number_args))
+                w.write(write_function(f"{filename}.{function_name}", number_vars))
             elif type == CommandType.C_CALL:
                 pass
             elif type == CommandType.C_RETURN:
                 w.write(write_return())
-            w.write("\n")
         w.write(write_end_loop())
-        w.write("\n")
 
 
 if __name__ == "__main__":

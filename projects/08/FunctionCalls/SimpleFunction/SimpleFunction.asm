@@ -14,7 +14,6 @@ A=M
 M=D
 @SP
 M=M+1
-
 // push local 0
 @0
 D=A
@@ -85,55 +84,47 @@ D=M
 A=A-1
 M=M-D
 // return
-@LCL
+@LCL // frame = LCL
 D=M
 @R13
 M=D
-
-@5
+@5 // retAddr = *(frame-5)
 A=D-A
 D=M
 @R14
 M=D
-
-@SP
+@SP // *ARG = pop()
 M=M-1
 A=M
 D=M
 @ARG
 A=M
 M=D
-
-@ARG
+@ARG // SP = ARG+1
 D=M+1
 @SP
 M=D
-
-@R13
+@R13 // THAT = *(frame-1)
 AM=M-1
 D=M
 @THAT
 M=D
-
-@R13
+@R13 // THIS = *(frame-2)
 AM=M-1
 D=M
 @THIS
 M=D
-
-@R13
+@R13 // ARG = *(frame-3)
 AM=M-1
 D=M
 @ARG
 M=D
-
-@R13
+@R13 // LCL = *(frame-4)
 AM=M-1
 D=M
 @LCL
 M=D
-
-@R14
+@R14 // goto retAddr
 A=M
 0;JMP
 @END_LOOP
