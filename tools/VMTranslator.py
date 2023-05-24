@@ -266,9 +266,10 @@ def write_push_pop(
                     """
                 )
             case ("static", index):
+                static_address = f"{filename}.{index}" if filename else index
                 address = dedent(
                     f"""\
-                    @{filename}.{index}
+                    @{static_address}
                     D=M
                     """
                 )
@@ -320,9 +321,10 @@ def write_push_pop(
                     """
                 )
             case ("static", index):
+                static_address = f"{filename}.{index}" if filename else index
                 address = dedent(
                     f"""\
-                    @{filename}.{index}
+                    @{static_address}
                     D=A
                     """
                 )
@@ -372,7 +374,7 @@ def write_if_goto(label: str):
 def write_function(name: str, number_vars: int):
     code = f"({name})\n"
     for _ in range(number_vars):
-        code += write_push_pop(CommandType.C_PUSH, "constant", 0)
+        code += write_push_pop(CommandType.C_PUSH, "constant", 0, None)
     return code
 
 
