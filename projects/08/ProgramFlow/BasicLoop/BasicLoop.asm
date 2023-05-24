@@ -21,7 +21,7 @@ D=M
 A=M
 M=D
 // label LOOP_START
-(LOOP_START)
+(BasicLoop.LOOP_START)
 // push argument 0    
 @0
 D=A
@@ -121,7 +121,7 @@ M=M+1
 M=M-1
 A=M
 D=M
-@LOOP_START
+@BasicLoop.LOOP_START
 D;JNE
 // push local 0
 @0

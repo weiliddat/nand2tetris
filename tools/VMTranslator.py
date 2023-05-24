@@ -4,7 +4,7 @@ from enum import Enum
 from textwrap import dedent
 from typing import Literal
 
-from utils import get_filepath_with_ext
+from utils import get_filename_no_ext, get_filepath_with_ext
 
 
 def read_file_lines(filepath: str) -> list[str]:
@@ -350,6 +350,70 @@ def write_if_goto(label: str):
     )
 
 
+def write_function(name: str, number_args: int):
+    code = f"@{name}\n"
+    for _ in range(number_args):
+        code += write_push_pop(CommandType.C_PUSH, "constant", 0) + "\n"
+    return code
+
+
+def write_return():
+    return dedent(
+        """\
+        @LCL
+        D=M
+        @R13
+        M=D
+
+        @5
+        A=D-A
+        D=M
+        @R14
+        M=D
+
+        @SP
+        M=M-1
+        A=M
+        D=M
+        @ARG
+        A=M
+        M=D
+
+        @ARG
+        D=M+1
+        @SP
+        M=D
+
+        @R13
+        AM=M-1
+        D=M
+        @THAT
+        M=D
+
+        @R13
+        AM=M-1
+        D=M
+        @THIS
+        M=D
+
+        @R13
+        AM=M-1
+        D=M
+        @ARG
+        M=D
+
+        @R13
+        AM=M-1
+        D=M
+        @LCL
+        M=D
+        
+        @R14
+        A=M
+        0;JMP"""
+    )
+
+
 def write_end_loop():
     return dedent(
         """\
@@ -378,9 +442,12 @@ def write_end_loop():
 def main():
     asmpath = sys.argv[1]
     hackpath = get_filepath_with_ext(asmpath, "asm")
+    filename = get_filename_no_ext(asmpath)
     lines = read_file_lines(asmpath)
 
     with open(hackpath, "w") as w:
+        function_prefix = f"{filename}."
+        return_index = 0
         for line in lines:
             type = get_command_type(line)
             w.write(f"// {line}\n")
@@ -389,11 +456,20 @@ def main():
             elif type == CommandType.C_PUSH or type == CommandType.C_POP:
                 w.write(write_push_pop(type, get_arg1(line), get_arg2(line)))
             elif type == CommandType.C_LABEL:
-                w.write(write_label(get_arg1(line)))
+                w.write(write_label(function_prefix + get_arg1(line)))
             elif type == CommandType.C_GOTO:
-                w.write(write_goto(get_arg1(line)))
+                w.write(write_goto(function_prefix + get_arg1(line)))
             elif type == CommandType.C_IF:
-                w.write(write_if_goto(get_arg1(line)))
+                w.write(write_if_goto(function_prefix + get_arg1(line)))
+            elif type == CommandType.C_FUNCTION:
+                function_name = get_arg1(line)
+                number_args = get_arg2(line)
+                function_prefix += f"{function_name}$"
+                w.write(write_function(f"{filename}.{function_name}", number_args))
+            elif type == CommandType.C_CALL:
+                pass
+            elif type == CommandType.C_RETURN:
+                w.write(write_return())
             w.write("\n")
         w.write(write_end_loop())
         w.write("\n")
