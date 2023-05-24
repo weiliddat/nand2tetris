@@ -4,7 +4,12 @@ from enum import Enum
 from textwrap import dedent
 from typing import Literal
 
-from utils import get_filename_no_ext, get_filepath_with_ext
+from utils import (
+    get_asm_filepath_from_path,
+    get_filename_no_ext,
+    get_filepath_with_ext,
+    get_vm_filepaths,
+)
 
 
 def read_file_lines(filepath: str) -> list[str]:
@@ -211,6 +216,7 @@ def write_push_pop(
     command: Literal[CommandType.C_PUSH, CommandType.C_POP],
     segment: str,
     index: int,
+    filename: str | None,
 ):
     address = ""
 
@@ -262,7 +268,7 @@ def write_push_pop(
             case ("static", index):
                 address = dedent(
                     f"""\
-                    @S{index}
+                    @{filename}.{index}
                     D=M
                     """
                 )
@@ -316,7 +322,7 @@ def write_push_pop(
             case ("static", index):
                 address = dedent(
                     f"""\
-                    @S{index}
+                    @{filename}.{index}
                     D=A
                     """
                 )
@@ -364,7 +370,7 @@ def write_if_goto(label: str):
 
 
 def write_function(name: str, number_vars: int):
-    code = f"@{name}\n"
+    code = f"({name})\n"
     for _ in range(number_vars):
         code += write_push_pop(CommandType.C_PUSH, "constant", 0)
     return code
@@ -420,9 +426,91 @@ def write_return():
     )
 
 
+return_index = 0
+
+
+def write_call(name: str, number_args: int):
+    global return_index
+
+    return_label = f"{name}$ret.{return_index}"
+    return_index += 1
+
+    call_code = dedent(
+        f"""\
+        @{return_label} // push returnAddress
+        D=A
+        @SP
+        M=M+1
+        A=M-1
+        M=D
+        @LCL // push LCL
+        D=M
+        @SP
+        M=M+1
+        A=M-1
+        M=D
+        @ARG // push ARG
+        D=M
+        @SP
+        M=M+1
+        A=M-1
+        M=D
+        @THIS // push THIS
+        D=M
+        @SP
+        M=M+1
+        A=M-1
+        M=D
+        @THAT // push THAT
+        D=M
+        @SP
+        M=M+1
+        A=M-1
+        M=D
+        @SP // ARG = SP - 5 - number_args
+        D=M
+        @5
+        D=D-A
+        @{number_args}
+        D=D-A
+        @ARG
+        M=D
+        @SP // LCL = SP
+        D=M
+        @LCL
+        M=D
+        @{name}
+        0;JMP
+        ({return_label}) // returnAddress
+        """
+    )
+
+    return call_code
+
+
+def write_init():
+    set_stack_pointer = dedent(
+        """\
+        @256 // SP=256
+        D=A
+        @SP
+        M=D
+        """
+    )
+    call_sys_init = write_call("Sys.init", 0)
+    jump_to_end = dedent(
+        """\
+        @END_LOOP
+        0;JMP
+        """
+    )
+    return set_stack_pointer + call_sys_init + jump_to_end
+
+
 def write_end_loop():
     return dedent(
         """\
+        (END_LOOP)
         @END_LOOP
         0;JMP
         (TRUE)
@@ -439,45 +527,53 @@ def write_end_loop():
         @RET
         A=M
         0;JMP
-        (END_LOOP)
-        @END_LOOP
-        0;JMP
         """
     )
 
 
 def main():
-    asmpath = sys.argv[1]
-    hackpath = get_filepath_with_ext(asmpath, "asm")
-    filename = get_filename_no_ext(asmpath)
-    lines = read_file_lines(asmpath)
+    dirpath = sys.argv[1]
+    filepaths = get_vm_filepaths(dirpath)
+    hackpath = get_asm_filepath_from_path(dirpath)
 
     with open(hackpath, "w") as w:
-        function_prefix = f"{filename}."
-        return_index = 0
-        for line in lines:
-            type = get_command_type(line)
-            w.write(f"// {line}\n")
-            if type == CommandType.C_ARITHMETIC:
-                w.write(write_arithmetic(line))
-            elif type == CommandType.C_PUSH or type == CommandType.C_POP:
-                w.write(write_push_pop(type, get_arg1(line), get_arg2(line)))
-            elif type == CommandType.C_LABEL:
-                w.write(write_label(function_prefix + get_arg1(line)))
-            elif type == CommandType.C_GOTO:
-                w.write(write_goto(function_prefix + get_arg1(line)))
-            elif type == CommandType.C_IF:
-                w.write(write_if_goto(function_prefix + get_arg1(line)))
-            elif type == CommandType.C_FUNCTION:
-                function_name = get_arg1(line)
-                number_vars = get_arg2(line)
-                function_prefix += f"{function_name}$"
-                w.write(write_function(f"{filename}.{function_name}", number_vars))
-            elif type == CommandType.C_CALL:
-                pass
-            elif type == CommandType.C_RETURN:
-                w.write(write_return())
-        w.write(write_end_loop())
+        for filepath in filepaths:
+            filename = get_filename_no_ext(filepath)
+            lines = read_file_lines(filepath)
+
+            function_prefix = f"{filename}."
+            w.write(write_init())
+            for line in lines:
+                comment_matcher = re.compile("(^.*)(//.*$)")
+                has_comments = comment_matcher.match(line)
+                if has_comments:
+                    line = has_comments.groups()[0].strip()
+                type = get_command_type(line)
+                w.write(f"// {line}\n")
+                if type == CommandType.C_ARITHMETIC:
+                    w.write(write_arithmetic(line))
+                elif type == CommandType.C_PUSH or type == CommandType.C_POP:
+                    w.write(
+                        write_push_pop(type, get_arg1(line), get_arg2(line), filename)
+                    )
+                elif type == CommandType.C_LABEL:
+                    w.write(write_label(function_prefix + get_arg1(line)))
+                elif type == CommandType.C_GOTO:
+                    w.write(write_goto(function_prefix + get_arg1(line)))
+                elif type == CommandType.C_IF:
+                    w.write(write_if_goto(function_prefix + get_arg1(line)))
+                elif type == CommandType.C_FUNCTION:
+                    function_name = get_arg1(line)
+                    number_vars = get_arg2(line)
+                    function_prefix += f"{function_name}$"
+                    w.write(write_function(f"{function_name}", number_vars))
+                elif type == CommandType.C_CALL:
+                    function_name = get_arg1(line)
+                    number_args = get_arg2(line)
+                    w.write(write_call(f"{function_name}", number_args))
+                elif type == CommandType.C_RETURN:
+                    w.write(write_return())
+            w.write(write_end_loop())
 
 
 if __name__ == "__main__":

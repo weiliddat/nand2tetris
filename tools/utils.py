@@ -1,4 +1,31 @@
+from genericpath import isdir, isfile
 import os
+
+
+def get_vm_filepaths(path: str) -> list[str]:
+    dirpath = os.path.dirname(path)
+    filenames = os.listdir(dirpath)
+    return [
+        os.path.join(dirpath, filename)
+        for filename in filenames
+        if os.path.splitext(filename)[1] == ".vm"
+    ]
+
+
+def get_asm_filepath_from_path(path: str) -> str:
+    if isfile(path):
+        dirpath = os.path.dirname(path)
+        filename = os.path.splitext(os.path.basename(path))[0] + ".asm"
+        return os.path.normpath(os.path.join(dirpath, filename))
+    elif isdir(path):
+        filename = (
+            os.path.split(path)[1]
+            if os.path.split(path)[1]
+            else os.path.split(os.path.split(path)[0])[1]
+        ) + ".asm"
+        return os.path.normpath(os.path.join(path, filename))
+    else:
+        raise ValueError(f"Invalid path {path}")
 
 
 def get_filepath_with_ext(filepath: str, ext: str) -> str:
