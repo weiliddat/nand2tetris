@@ -1,5 +1,7 @@
-from genericpath import isdir, isfile
 import os
+from typing import Iterable
+
+from genericpath import isdir, isfile
 
 
 def get_vm_filepaths(path: str) -> list[str]:
@@ -40,3 +42,11 @@ def get_filename_no_ext(filepath: str) -> str:
     filename = os.path.basename(filepath)
     filename_no_ext = os.path.splitext(filename)[0]
     return filename_no_ext
+
+
+def flatten(xs):
+    for x in xs:
+        if isinstance(x, Iterable) and not isinstance(x, (str, bytes)):
+            yield from flatten(x)
+        else:
+            yield x
