@@ -92,7 +92,7 @@ jack_grammar = Grammar(
     symbol_eq = "="
     symbol_tilde = "~"
 
-    ws = ~"\s*"
+    ws = ~"\\s*"
     emptyline = ws+
     semi = ws? symbol_semicolon
     """
